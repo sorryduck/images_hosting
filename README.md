@@ -8,20 +8,29 @@ The API allows authenticated users to upload images and get links with a specifi
 ```
 git clone https://github.com/sorryduck/images_hosting.git
 ```
+
 2. Install the requirements
 ```
 cd images_hosting
 pip install -r requirements.txt
 ```
-3. Run the migrations
+
+3. Make migrations
+```
+python manage.py makemigrations
+```
+
+4. Run the migrations
 ```
 python manage.py migrate
 ```
-4. Create a superuser
+
+5. Create a superuser
 ```
 python manage.py createsuperuser
 ```
-5. Run the development server
+
+6. Run the development server
 ```
 python manage.py runserver
 ```
