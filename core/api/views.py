@@ -110,8 +110,8 @@ class TempLinkAPI(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        if self.request.user.has_perm('api.expiring_links_bin_image'):
-
+        if self.request.user.has_perm('api.expiring_links_bin_image') \
+                and Images.objects.get(id=request.data['image']).user_id == request.user.id:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
