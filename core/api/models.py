@@ -35,7 +35,8 @@ class Images(models.Model):
         ]
 
 
-class BinaryImageTempLinks(models.Model):
+class Binary_images_links(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     image = models.ForeignKey(Images, on_delete=models.CASCADE)
     life_time = models.IntegerField()
     generated_uuid = models.CharField(max_length=36)

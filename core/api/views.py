@@ -8,12 +8,14 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from django.utils import timezone
 from .serializers import *
-from .models import Images, BinaryImageTempLinks
+from .models import *
 
 
 class ImageAPIViewSet(viewsets.ModelViewSet):
-    queryset = Images.objects.all().order_by('-id')
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Images.objects.filter(user_id=self.request.user.id).order_by('-id')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -50,22 +52,22 @@ class ImageAPIViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
 
-        if self.request.user.has_perm('blog.link_for_small_thumbnail'):
+        if self.request.user.has_perm('api.link_for_small_thumbnail'):
             image_thumbnail_small = self.make_thumbnails((200, 200), serializer)
         else:
             image_thumbnail_small = None
 
-        if self.request.user.has_perm('blog.link_for_big_thumbnail'):
+        if self.request.user.has_perm('api.link_for_big_thumbnail'):
             image_thumbnail_big = self.make_thumbnails((400, 400), serializer)
         else:
             image_thumbnail_big = None
 
-        if self.request.user.has_perm('blog.expiring_links_bin_image'):
+        if self.request.user.has_perm('api.expiring_links_bin_image'):
             binary_image = self.make_binary_image(serializer)
         else:
             binary_image = None
 
-        if self.request.user.has_perm('blog.link_for_original_image'):
+        if self.request.user.has_perm('api.link_for_original_image'):
             image_orig = serializer.validated_data.get('image_orig')
         else:
             image_orig = None
@@ -79,8 +81,11 @@ class ImageAPIViewSet(viewsets.ModelViewSet):
 
 
 class TempLinkAPI(viewsets.ModelViewSet):
-    queryset = BinaryImageTempLinks.objects.all().order_by('-id')
+    permissions = [permissions.IsAuthenticated]
     uuid_link = uuid.uuid4()
+
+    def get_queryset(self):
+        return Binary_images_links.objects.filter(user_id=self.request.user.id)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -89,24 +94,32 @@ class TempLinkAPI(viewsets.ModelViewSet):
             return TempLinkGeneratorSerializer
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        print(request.user.id)
+        if self.request.user.has_perm('api.expiring_links_bin_image'):
+            queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        print(serializer.validated_data)
-        link = f'/api/{self.uuid_link}'
-        return Response({'link': link}, status=status.HTTP_201_CREATED, headers=headers)
+
+        if self.request.user.has_perm('api.expiring_links_bin_image'):
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            link = f'/api/{self.uuid_link}'
+            return Response({'link': link}, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -115,7 +128,7 @@ class TempLinkAPI(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
 
-        link_object = get_object_or_404(BinaryImageTempLinks, generated_uuid=kwargs['temp_link'])
+        link_object = get_object_or_404(Binary_images_links, generated_uuid=kwargs['temp_link'])
 
         if timezone.now() < link_object.time_created + timezone.timedelta(seconds=link_object.life_time):
             return HttpResponse(link_object.image.binary_image)
