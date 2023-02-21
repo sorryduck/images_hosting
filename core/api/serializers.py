@@ -43,7 +43,7 @@ class ImageListSerializer(serializers.Serializer):
 
 class TempLinkGeneratorSerializer(serializers.Serializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    image = serializers.PrimaryKeyRelatedField(queryset=Images.objects.all())
+    image = serializers.PrimaryKeyRelatedField(queryset=Images.objects.all(), )
     life_time = serializers.IntegerField(validators=[validate_life_time])
 
     def create(self, validated_data):

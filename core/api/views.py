@@ -94,7 +94,6 @@ class TempLinkAPI(viewsets.ModelViewSet):
             return TempLinkGeneratorSerializer
 
     def list(self, request, *args, **kwargs):
-        print(request.user.id)
         if self.request.user.has_perm('api.expiring_links_bin_image'):
             queryset = self.filter_queryset(self.get_queryset())
 
@@ -110,7 +109,8 @@ class TempLinkAPI(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        if self.request.user.has_perm('api.expiring_links_bin_image'):
+        if self.request.user.has_perm('api.expiring_links_bin_image') \
+                and Images.objects.get(id=request.data['image']).user_id == request.user.id:
 
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -131,6 +131,7 @@ class TempLinkAPI(viewsets.ModelViewSet):
         link_object = get_object_or_404(Binary_images_links, generated_uuid=kwargs['temp_link'])
 
         if timezone.now() < link_object.time_created + timezone.timedelta(seconds=link_object.life_time):
+
             return HttpResponse(link_object.image.binary_image)
         else:
             return Response({'response': "link's dead"})
