@@ -25,8 +25,8 @@ SECRET_KEY = 'django-insecure-cy3x5@&o38+ugsg@j8g4=edtd^+nbmn_6*_328grya*l87(=2m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['images-hosting-ocean.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://images-hosting-ocean.up.railway.app']
 
 # Application definition
 
