@@ -1,6 +1,7 @@
 from django.urls import path, include
 from api.views import ImageAPIViewSet, TempLinkAPI
 
+
 urlpatterns = [
     path('auth/', include('rest_framework.urls')),
     path('image_list/', ImageAPIViewSet.as_view({'get': 'list'})),
